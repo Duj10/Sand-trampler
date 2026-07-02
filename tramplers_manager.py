@@ -3,16 +3,16 @@
 """
 Tramplers Manager
 ------------------
-Petite appli de bureau pour gerer les tramplers du jeu "Sand" (Hologryph),
-puisque le jeu ne permet pas de les partager nativement.
+Little desktop app to manage tramplers from the game "Sand" (Hologryph),
+since the game doesn't allow sharing them natively.
 
-Fonctions:
-  - Bibliotheque locale (copie + notes) independante du dossier du jeu
-  - Import rapide d'un trampler de la bibliotheque vers le dossier du jeu
-  - Recuperation des tramplers deja presents dans le dossier du jeu
-  - Export d'un trampler pour le partager (Discord, cle USB, etc.)
+Features:
+  - Local library (copy + notes) independent from the game folder
+  - Quick import of a trampler from library to the game folder
+  - Retrieve tramplers already present in the game folder
+  - Export a trampler to share (Discord, USB drive, etc.)
 
-Aucune dependance externe : uniquement la bibliotheque standard Python (Tkinter).
+No external dependencies: only Python standard library (Tkinter).
 """
 
 import json
@@ -29,17 +29,17 @@ from tkinter import ttk, filedialog, messagebox, simpledialog
 APP_NAME = "Tramplers Manager"
 
 # ---------------------------------------------------------------------------
-# Palette "dune au crepuscule"
+# Color palette "dune at dusk"
 # ---------------------------------------------------------------------------
-COL_BG        = "#211E36"   # fond principal - indigo nuit
-COL_PANEL     = "#2C2848"   # panneaux
+COL_BG        = "#211E36"   # main background - midnight indigo
+COL_PANEL     = "#2C2848"   # panels
 COL_PANEL_ALT = "#332C4D"
-COL_TEXT      = "#EFE3C8"   # sable pale
+COL_TEXT      = "#EFE3C8"   # pale sand
 COL_MUTED     = "#B7A98A"
-COL_GOLD      = "#D4A24C"   # accent dune
+COL_GOLD      = "#D4A24C"   # dune accent
 COL_GOLD_DK   = "#B4863A"
-COL_TEAL      = "#5C8B89"   # succes / connecte
-COL_RUST      = "#C1602D"   # danger / suppression
+COL_TEAL      = "#5C8B89"   # success / connected
+COL_RUST      = "#C1602D"   # danger / deletion
 COL_ROW_ALT   = "#2A2646"
 
 FONT_TITLE = ("Georgia", 18, "bold")
@@ -67,15 +67,15 @@ def library_root() -> Path:
 
 
 def human_size(n: int) -> str:
-    for unit in ("o", "Ko", "Mo", "Go"):
+    for unit in ("B", "KB", "MB", "GB"):
         if n < 1024:
-            return f"{n:.0f} {unit}" if unit == "o" else f"{n:.1f} {unit}"
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
         n /= 1024
-    return f"{n:.1f} To"
+    return f"{n:.1f} TB"
 
 
 # ---------------------------------------------------------------------------
-# Stockage (config + index bibliotheque)
+# Storage (config + library index)
 # ---------------------------------------------------------------------------
 class Store:
     def __init__(self):
@@ -127,7 +127,7 @@ class Store:
             "notes": notes,
             "added_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "size": dest.stat().st_size,
-            "original_name": source_path.name,
+            "original_filename": source_path.name,
         }
         self.index["items"].append(record)
         self.save_index()
@@ -155,11 +155,11 @@ class Store:
         return self.files_dir / rec["file"]
 
     def known_original_names(self):
-        return {i.get("original_name") for i in self.index["items"]}
+        return {i.get("original_filename") for i in self.index["items"]}
 
 
 # ---------------------------------------------------------------------------
-# Interface
+# User Interface
 # ---------------------------------------------------------------------------
 class App(tk.Tk):
     def __init__(self):
@@ -176,7 +176,7 @@ class App(tk.Tk):
         self._refresh_table()
         self._refresh_folder_label()
 
-    # -- style -------------------------------------------------------------
+    # -- styling -----------------------------------------------------------
     def _build_style(self):
         style = ttk.Style(self)
         try:
@@ -210,28 +210,28 @@ class App(tk.Tk):
         style.configure("Treeview.Heading", background=COL_PANEL_ALT, foreground=COL_MUTED,
                          font=("Segoe UI", 9, "bold"), borderwidth=0)
 
-    # -- layout --------------------------------------------------------------
+    # -- layout ------------------------------------------------------------
     def _build_layout(self):
         header = ttk.Frame(self, style="TFrame")
         header.pack(fill="x", padx=20, pady=(18, 6))
 
         ttk.Label(header, text="Tramplers Manager", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(header, text="Bibliotheque locale pour tes tramplers du jeu Sand",
+        ttk.Label(header, text="Local library for your Sand game tramplers",
                   style="Sub.TLabel").pack(anchor="w", pady=(2, 0))
 
-        # ~~~ ligne "dune" decorative ~~~
+        # ~~~ decorative "dune" line ~~~
         wave = tk.Canvas(self, height=10, bg=COL_BG, highlightthickness=0)
         wave.pack(fill="x", padx=20, pady=(8, 4))
         self._draw_dune(wave)
 
-        # dossier du jeu
+        # game folder
         folder_row = ttk.Frame(self, style="TFrame")
         folder_row.pack(fill="x", padx=20, pady=(4, 10))
         self.folder_label = ttk.Label(folder_row, text="", style="Sub.TLabel")
         self.folder_label.pack(side="left")
-        ttk.Button(folder_row, text="Changer le dossier du jeu", style="Ghost.TButton",
+        ttk.Button(folder_row, text="Change game folder", style="Ghost.TButton",
                    command=self.change_game_folder).pack(side="right")
-        ttk.Button(folder_row, text="Ouvrir le dossier du jeu", style="Ghost.TButton",
+        ttk.Button(folder_row, text="Open game folder", style="Ghost.TButton",
                    command=self.open_game_folder).pack(side="right", padx=(0, 8))
 
         # table
@@ -240,9 +240,9 @@ class App(tk.Tk):
 
         columns = ("name", "added", "size", "notes")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", selectmode="browse")
-        self.tree.heading("name", text="Nom")
-        self.tree.heading("added", text="Ajoute le")
-        self.tree.heading("size", text="Taille")
+        self.tree.heading("name", text="Name")
+        self.tree.heading("added", text="Added on")
+        self.tree.heading("size", text="Size")
         self.tree.heading("notes", text="Notes")
         self.tree.column("name", width=260, anchor="w")
         self.tree.column("added", width=140, anchor="w")
@@ -255,32 +255,32 @@ class App(tk.Tk):
         self.tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
 
-        # boutons d'action
+        # action buttons
         actions = ttk.Frame(self, style="TFrame")
         actions.pack(fill="x", padx=20, pady=(0, 10))
 
         left_actions = ttk.Frame(actions, style="TFrame")
         left_actions.pack(side="left")
-        ttk.Button(left_actions, text="+ Importer un fichier...", style="Gold.TButton",
+        ttk.Button(left_actions, text="+ Import a file...", style="Gold.TButton",
                    command=self.import_file).pack(side="left", padx=(0, 8))
-        ttk.Button(left_actions, text="Recuperer depuis le jeu", style="Ghost.TButton",
+        ttk.Button(left_actions, text="Retrieve from game", style="Ghost.TButton",
                    command=self.load_from_game).pack(side="left", padx=(0, 8))
 
         right_actions = ttk.Frame(actions, style="TFrame")
         right_actions.pack(side="right")
-        ttk.Button(right_actions, text="Supprimer", style="Danger.TButton",
+        ttk.Button(right_actions, text="Delete", style="Danger.TButton",
                    command=self.delete_selected).pack(side="right", padx=(8, 0))
-        ttk.Button(right_actions, text="Exporter / Partager...", style="Ghost.TButton",
+        ttk.Button(right_actions, text="Export / Share...", style="Ghost.TButton",
                    command=self.export_selected).pack(side="right", padx=(8, 0))
-        ttk.Button(right_actions, text="Modifier les notes", style="Ghost.TButton",
+        ttk.Button(right_actions, text="Edit notes", style="Ghost.TButton",
                    command=self.edit_notes_selected).pack(side="right", padx=(8, 0))
-        ttk.Button(right_actions, text="Renommer", style="Ghost.TButton",
+        ttk.Button(right_actions, text="Rename", style="Ghost.TButton",
                    command=self.rename_selected).pack(side="right", padx=(8, 0))
-        ttk.Button(right_actions, text="Envoyer dans le jeu", style="Gold.TButton",
+        ttk.Button(right_actions, text="Send to game", style="Gold.TButton",
                    command=self.send_to_game).pack(side="right", padx=(8, 0))
 
-        # barre de statut
-        self.status = tk.StringVar(value=f"Bibliotheque : {self.store.root}")
+        # status bar
+        self.status = tk.StringVar(value=f"Library: {self.store.root}")
         status_bar = ttk.Label(self, textvariable=self.status, style="Sub.TLabel")
         status_bar.pack(fill="x", padx=20, pady=(0, 14))
 
@@ -301,31 +301,31 @@ class App(tk.Tk):
                 canvas.create_line(*points[i], *points[i + 1], fill=COL_GOLD_DK, width=2, smooth=True)
         canvas.bind("<Configure>", redraw)
 
-    # -- helpers UI ----------------------------------------------------------
+    # -- UI helpers -------------------------------------------------------
     def _refresh_folder_label(self):
         exists = self.store.game_folder.exists()
-        marker = "connecte" if exists else "introuvable - clique sur Changer le dossier du jeu"
-        self.folder_label.configure(text=f"Dossier du jeu ({marker}) : {self.store.game_folder}")
+        marker = "connected" if exists else "not found - click Change game folder"
+        self.folder_label.configure(text=f"Game folder ({marker}): {self.store.game_folder}")
 
     def _refresh_table(self):
         self.tree.delete(*self.tree.get_children())
         for i, rec in enumerate(sorted(self.store.items(), key=lambda r: r["added_at"], reverse=True)):
             self.tree.insert("", "end", iid=rec["id"],
                               values=(rec["name"], rec["added_at"], human_size(rec["size"]), rec.get("notes", "")))
-        self.status.set(f"{len(self.store.items())} trampler(s) dans la bibliotheque - {self.store.root}")
+        self.status.set(f"{len(self.store.items())} trampler(s) in library - {self.store.root}")
 
     def _selected_id(self):
         sel = self.tree.selection()
         if not sel:
-            messagebox.showinfo(APP_NAME, "Selectionne d'abord un trampler dans la liste.")
+            messagebox.showinfo(APP_NAME, "First select a trampler from the list.")
             return None
         return sel[0]
 
-    # -- actions ---------------------------------------------------------
+    # -- actions ----------------------------------------------------------
     def import_file(self):
         paths = filedialog.askopenfilenames(
-            title="Choisir un ou plusieurs fichiers .wbt",
-            filetypes=[("Trampler Sand", "*.wbt"), ("Tous les fichiers", "*.*")],
+            title="Choose one or more .wbt files",
+            filetypes=[("Sand Trampler", "*.wbt"), ("All files", "*.*")],
         )
         if not paths:
             return
@@ -333,7 +333,7 @@ class App(tk.Tk):
         for p in paths:
             src = Path(p)
             name = simpledialog.askstring(
-                APP_NAME, f"Nom a donner a ce trampler :", initialvalue=src.stem
+                APP_NAME, f"Name for this trampler:", initialvalue=src.stem
             )
             if name is None:
                 continue
@@ -341,25 +341,25 @@ class App(tk.Tk):
             added += 1
         if added:
             self._refresh_table()
-            messagebox.showinfo(APP_NAME, f"{added} trampler(s) ajoute(s) a la bibliotheque.")
+            messagebox.showinfo(APP_NAME, f"{added} trampler(s) added to library.")
 
     def load_from_game(self):
         folder = self.store.game_folder
         if not folder.exists():
-            messagebox.showwarning(APP_NAME, "Le dossier du jeu est introuvable. Change-le d'abord.")
+            messagebox.showwarning(APP_NAME, "Game folder not found. Change it first.")
             return
         wbt_files = sorted(folder.glob("*.wbt"))
         if not wbt_files:
-            messagebox.showinfo(APP_NAME, "Aucun fichier .wbt trouve dans ce dossier.")
+            messagebox.showinfo(APP_NAME, "No .wbt files found in this folder.")
             return
 
         known = self.store.known_original_names()
         picker = tk.Toplevel(self)
-        picker.title("Recuperer depuis le jeu")
+        picker.title("Retrieve from game")
         picker.configure(bg=COL_BG)
         picker.geometry("420x420")
 
-        ttk.Label(picker, text="Selectionne les tramplers a copier dans ta bibliotheque :",
+        ttk.Label(picker, text="Select tramplers to copy to your library:",
                   style="TLabel").pack(anchor="w", padx=14, pady=(14, 6))
 
         list_frame = ttk.Frame(picker, style="Panel.TFrame")
@@ -369,7 +369,7 @@ class App(tk.Tk):
                               font=FONT_BODY, borderwidth=0, highlightthickness=0)
         listbox.pack(fill="both", expand=True, padx=2, pady=2)
         for f in wbt_files:
-            tag = "  (deja dans la bibliotheque)" if f.name in known else ""
+            tag = "  (already in library)" if f.name in known else ""
             listbox.insert("end", f"{f.name}{tag}")
 
         def do_import():
@@ -395,7 +395,7 @@ class App(tk.Tk):
         if not item_id:
             return
         rec = self.store.find(item_id)
-        new_name = simpledialog.askstring(APP_NAME, "Nouveau nom :", initialvalue=rec["name"])
+        new_name = simpledialog.askstring(APP_NAME, "New name:", initialvalue=rec["name"])
         if new_name:
             rec["name"] = new_name.strip()
             self.store.save_index()
@@ -406,7 +406,7 @@ class App(tk.Tk):
         if not item_id:
             return
         rec = self.store.find(item_id)
-        new_notes = simpledialog.askstring(APP_NAME, "Notes :", initialvalue=rec.get("notes", ""))
+        new_notes = simpledialog.askstring(APP_NAME, "Notes:", initialvalue=rec.get("notes", ""))
         if new_notes is not None:
             rec["notes"] = new_notes.strip()
             self.store.save_index()
@@ -417,8 +417,8 @@ class App(tk.Tk):
         if not item_id:
             return
         rec = self.store.find(item_id)
-        if messagebox.askyesno(APP_NAME, f"Supprimer '{rec['name']}' de la bibliotheque ?\n"
-                                          f"(Le fichier dans le jeu, s'il y est, n'est pas touche.)"):
+        if messagebox.askyesno(APP_NAME, f"Delete '{rec['name']}' from library?\n"
+                                          f"(The file in the game, if present, is not affected.)"):
             self.store.remove_item(item_id)
             self._refresh_table()
 
@@ -428,15 +428,15 @@ class App(tk.Tk):
             return
         rec = self.store.find(item_id)
         dest = filedialog.asksaveasfilename(
-            title="Exporter vers...",
+            title="Export to...",
             initialfile=sanitize_filename(rec["name"]) + ".wbt",
             defaultextension=".wbt",
-            filetypes=[("Trampler Sand", "*.wbt")],
+            filetypes=[("Sand Trampler", "*.wbt")],
         )
         if dest:
             shutil.copy2(self.store.path_of(item_id), dest)
-            messagebox.showinfo(APP_NAME, "Trampler exporte. Tu peux le partager comme tu veux "
-                                           "(Discord, cle USB, cloud...).")
+            messagebox.showinfo(APP_NAME, "Trampler exported. You can share it any way you want "
+                                           "(Discord, USB drive, cloud...).")
 
     def send_to_game(self):
         item_id = self._selected_id()
@@ -455,8 +455,8 @@ class App(tk.Tk):
         if target.exists():
             choice = messagebox.askyesnocancel(
                 APP_NAME,
-                f"'{target_name}' existe deja dans le dossier du jeu.\n\n"
-                f"Oui = remplacer / Non = garder les deux (renommer) / Annuler = ne rien faire",
+                f"'{target_name}' already exists in the game folder.\n\n"
+                f"Yes = replace / No = keep both (rename) / Cancel = do nothing",
             )
             if choice is None:
                 return
@@ -467,12 +467,12 @@ class App(tk.Tk):
                 target = folder / f"{sanitize_filename(rec['name'])} ({n}).wbt"
 
         shutil.copy2(self.store.path_of(item_id), target)
-        messagebox.showinfo(APP_NAME, f"Trampler envoye dans le jeu :\n{target.name}\n\n"
-                                       f"Relance Sand pour le voir apparaitre.")
+        messagebox.showinfo(APP_NAME, f"Trampler sent to game:\n{target.name}\n\n"
+                                       f"Restart Sand to see it appear.")
 
     def change_game_folder(self):
         chosen = filedialog.askdirectory(
-            title="Choisir le dossier Walkers du jeu",
+            title="Choose the game's Walkers folder",
             initialdir=str(self.store.game_folder if self.store.game_folder.exists() else Path.home()),
         )
         if chosen:
@@ -482,10 +482,10 @@ class App(tk.Tk):
     def open_game_folder(self):
         folder = self.store.game_folder
         if not folder.exists():
-            messagebox.showwarning(APP_NAME, "Ce dossier n'existe pas.")
+            messagebox.showwarning(APP_NAME, "This folder does not exist.")
             return
         try:
-            os.startfile(folder)  # Windows uniquement
+            os.startfile(folder)  # Windows only
         except AttributeError:
             messagebox.showinfo(APP_NAME, str(folder))
 
