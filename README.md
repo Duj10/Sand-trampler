@@ -4,11 +4,6 @@ Little app to manage your tramplers from the game **Sand** (Hologryph): local li
 quick import to the game folder, retrieve tramplers already present, export to share
 with other players.
 
-## Why not just provide a .exe directly?
-
-I run on a Linux server, so I can't compile a `.exe` for Windows myself, it must be
-built *on* Windows. But the step is simple and only needs to be done once (2 minutes).
-
 ## Step 1 — Install Python (if not already done)
 
 Download Python from https://python.org/downloads (yellow "Download Python" button).
