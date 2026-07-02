@@ -6,7 +6,7 @@ with other players.
 
 ## Why not just provide a .exe directly?
 
-I run on a Linux server, so I can't compile a `.exe` for Windows myself — it must be
+I run on a Linux server, so I can't compile a `.exe` for Windows myself, it must be
 built *on* Windows. But the step is simple and only needs to be done once (2 minutes).
 
 ## Step 1 — Install Python (if not already done)

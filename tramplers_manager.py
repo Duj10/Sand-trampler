@@ -29,24 +29,26 @@ from tkinter import ttk, filedialog, messagebox, simpledialog
 APP_NAME = "Tramplers Manager"
 
 # ---------------------------------------------------------------------------
-# Color palette "dune at dusk"
+# Color palette — warm desert dusk (Sand game)
 # ---------------------------------------------------------------------------
-COL_BG        = "#211E36"   # main background - midnight indigo
-COL_PANEL     = "#2C2848"   # panels
-COL_PANEL_ALT = "#332C4D"
-COL_TEXT      = "#EFE3C8"   # pale sand
-COL_MUTED     = "#B7A98A"
-COL_GOLD      = "#D4A24C"   # dune accent
-COL_GOLD_DK   = "#B4863A"
-COL_TEAL      = "#5C8B89"   # success / connected
-COL_RUST      = "#C1602D"   # danger / deletion
-COL_ROW_ALT   = "#2A2646"
+COL_BG        = "#1C1917"   # warm charcoal
+COL_PANEL     = "#292524"   # stone panel
+COL_PANEL_ALT = "#35302C"
+COL_BORDER    = "#44403C"
+COL_TEXT      = "#F5F0E8"   # sand white
+COL_MUTED     = "#A8A29E"
+COL_ACCENT    = "#D4A574"   # sand gold
+COL_ACCENT_HV = "#B8894F"
+COL_OK        = "#84A98C"   # sage green
+COL_RUST      = "#C97B63"   # terracotta
+COL_ROW_ALT   = "#322C28"
+COL_BTN_FG    = "#1C1917"
 
-FONT_TITLE = ("Georgia", 18, "bold")
-FONT_SUB   = ("Segoe UI", 10)
+FONT_TITLE = ("Segoe UI", 15, "bold")
+FONT_SUB   = ("Segoe UI", 9)
 FONT_BODY  = ("Segoe UI", 10)
 FONT_MONO  = ("Consolas", 9)
-FONT_BTN   = ("Segoe UI", 10, "bold")
+FONT_BTN   = ("Segoe UI", 9, "bold")
 
 INVALID_CHARS = r'<>:"/\\|?*'
 
@@ -186,57 +188,74 @@ class App(tk.Tk):
 
         style.configure("TFrame", background=COL_BG)
         style.configure("Panel.TFrame", background=COL_PANEL)
+        style.configure("Card.TFrame", background=COL_PANEL, relief="flat")
         style.configure("TLabel", background=COL_BG, foreground=COL_TEXT, font=FONT_BODY)
         style.configure("Title.TLabel", background=COL_BG, foreground=COL_TEXT, font=FONT_TITLE)
         style.configure("Sub.TLabel", background=COL_BG, foreground=COL_MUTED, font=FONT_SUB)
         style.configure("Panel.TLabel", background=COL_PANEL, foreground=COL_MUTED, font=FONT_MONO)
+        style.configure("Footer.TLabel", background=COL_PANEL, foreground=COL_MUTED, font=FONT_SUB)
 
-        style.configure("Gold.TButton", background=COL_GOLD, foreground="#241D0E",
-                         font=FONT_BTN, padding=8, borderwidth=0)
-        style.map("Gold.TButton", background=[("active", COL_GOLD_DK)])
+        style.configure("Accent.TButton", background=COL_ACCENT, foreground=COL_BTN_FG,
+                         font=FONT_BTN, padding=(12, 6), borderwidth=0)
+        style.map("Accent.TButton",
+                  background=[("active", COL_ACCENT_HV), ("disabled", COL_BORDER)],
+                  foreground=[("disabled", COL_MUTED)])
 
         style.configure("Ghost.TButton", background=COL_PANEL_ALT, foreground=COL_TEXT,
-                         font=FONT_BODY, padding=7, borderwidth=0)
+                         font=FONT_BODY, padding=(10, 5), borderwidth=0)
         style.map("Ghost.TButton", background=[("active", COL_ROW_ALT)])
 
-        style.configure("Danger.TButton", background=COL_RUST, foreground="#241D0E",
-                         font=FONT_BODY, padding=7, borderwidth=0)
-        style.map("Danger.TButton", background=[("active", "#9C4A21")])
+        style.configure("Danger.TButton", background=COL_RUST, foreground=COL_BTN_FG,
+                         font=FONT_BODY, padding=(10, 5), borderwidth=0)
+        style.map("Danger.TButton", background=[("active", "#A86552")])
 
         style.configure("Treeview", background=COL_PANEL, fieldbackground=COL_PANEL,
-                         foreground=COL_TEXT, rowheight=26, font=FONT_BODY, borderwidth=0)
-        style.map("Treeview", background=[("selected", COL_GOLD_DK)],
-                  foreground=[("selected", "#241D0E")])
+                         foreground=COL_TEXT, rowheight=28, font=FONT_BODY, borderwidth=0)
+        style.map("Treeview", background=[("selected", COL_ACCENT_HV)],
+                  foreground=[("selected", COL_BTN_FG)])
         style.configure("Treeview.Heading", background=COL_PANEL_ALT, foreground=COL_MUTED,
-                         font=("Segoe UI", 9, "bold"), borderwidth=0)
+                         font=("Segoe UI", 9, "bold"), borderwidth=0, relief="flat")
+        style.configure("Vertical.TScrollbar", background=COL_PANEL_ALT,
+                         troughcolor=COL_PANEL, borderwidth=0, arrowsize=12)
+        style.map("Vertical.TScrollbar", background=[("active", COL_BORDER)])
+
+    def _card(self, parent, **pack_kw):
+        outer = tk.Frame(parent, bg=COL_BORDER, padx=1, pady=1)
+        outer.pack(**pack_kw)
+        inner = ttk.Frame(outer, style="Panel.TFrame")
+        inner.pack(fill="both", expand=True)
+        return inner
 
     # -- layout ------------------------------------------------------------
     def _build_layout(self):
         header = ttk.Frame(self, style="TFrame")
-        header.pack(fill="x", padx=20, pady=(18, 6))
+        header.pack(fill="x", padx=24, pady=(20, 12))
 
         ttk.Label(header, text="Tramplers Manager", style="Title.TLabel").pack(anchor="w")
         ttk.Label(header, text="Local library for your Sand game tramplers",
-                  style="Sub.TLabel").pack(anchor="w", pady=(2, 0))
+                  style="Sub.TLabel").pack(anchor="w", pady=(4, 0))
 
-        # ~~~ decorative "dune" line ~~~
-        wave = tk.Canvas(self, height=10, bg=COL_BG, highlightthickness=0)
-        wave.pack(fill="x", padx=20, pady=(8, 4))
-        self._draw_dune(wave)
+        folder_card = self._card(self, fill="x", padx=24, pady=(0, 12))
+        folder_row = ttk.Frame(folder_card, style="Panel.TFrame")
+        folder_row.pack(fill="x", padx=12, pady=10)
 
-        # game folder
-        folder_row = ttk.Frame(self, style="TFrame")
-        folder_row.pack(fill="x", padx=20, pady=(4, 10))
-        self.folder_label = ttk.Label(folder_row, text="", style="Sub.TLabel")
-        self.folder_label.pack(side="left")
-        ttk.Button(folder_row, text="Change game folder", style="Ghost.TButton",
+        self.folder_status = tk.Label(folder_row, text="●", bg=COL_PANEL, fg=COL_MUTED,
+                                       font=("Segoe UI", 10))
+        self.folder_status.pack(side="left", padx=(0, 8))
+        self.folder_label = tk.Label(folder_row, text="", bg=COL_PANEL, fg=COL_MUTED,
+                                      font=FONT_MONO, anchor="w")
+        self.folder_label.pack(side="left", fill="x", expand=True)
+
+        folder_btns = ttk.Frame(folder_row, style="Panel.TFrame")
+        folder_btns.pack(side="right")
+        ttk.Button(folder_btns, text="Open", style="Ghost.TButton",
+                   command=self.open_game_folder).pack(side="right", padx=(6, 0))
+        ttk.Button(folder_btns, text="Change folder", style="Ghost.TButton",
                    command=self.change_game_folder).pack(side="right")
-        ttk.Button(folder_row, text="Open game folder", style="Ghost.TButton",
-                   command=self.open_game_folder).pack(side="right", padx=(0, 8))
 
-        # table
-        table_frame = ttk.Frame(self, style="Panel.TFrame")
-        table_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        table_card = self._card(self, fill="both", expand=True, padx=24, pady=(0, 12))
+        table_frame = ttk.Frame(table_card, style="Panel.TFrame")
+        table_frame.pack(fill="both", expand=True, padx=8, pady=8)
 
         columns = ("name", "added", "size", "notes")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", selectmode="browse")
@@ -251,61 +270,50 @@ class App(tk.Tk):
         self.tree.pack(fill="both", expand=True, side="left")
         self.tree.bind("<Double-1>", lambda e: self.rename_selected())
 
-        scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview,
+                                   style="Vertical.TScrollbar")
         self.tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
 
-        # action buttons
         actions = ttk.Frame(self, style="TFrame")
-        actions.pack(fill="x", padx=20, pady=(0, 10))
+        actions.pack(fill="x", padx=24, pady=(0, 12))
 
         left_actions = ttk.Frame(actions, style="TFrame")
         left_actions.pack(side="left")
-        ttk.Button(left_actions, text="+ Import a file...", style="Gold.TButton",
-                   command=self.import_file).pack(side="left", padx=(0, 8))
-        ttk.Button(left_actions, text="Retrieve from game", style="Ghost.TButton",
-                   command=self.load_from_game).pack(side="left", padx=(0, 8))
+        ttk.Button(left_actions, text="Import file…", style="Accent.TButton",
+                   command=self.import_file).pack(side="left", padx=(0, 6))
+        ttk.Button(left_actions, text="From game", style="Ghost.TButton",
+                   command=self.load_from_game).pack(side="left")
 
         right_actions = ttk.Frame(actions, style="TFrame")
         right_actions.pack(side="right")
         ttk.Button(right_actions, text="Delete", style="Danger.TButton",
-                   command=self.delete_selected).pack(side="right", padx=(8, 0))
-        ttk.Button(right_actions, text="Export / Share...", style="Ghost.TButton",
-                   command=self.export_selected).pack(side="right", padx=(8, 0))
-        ttk.Button(right_actions, text="Edit notes", style="Ghost.TButton",
-                   command=self.edit_notes_selected).pack(side="right", padx=(8, 0))
+                   command=self.delete_selected).pack(side="right", padx=(6, 0))
+        ttk.Button(right_actions, text="Export", style="Ghost.TButton",
+                   command=self.export_selected).pack(side="right", padx=(6, 0))
+        ttk.Button(right_actions, text="Notes", style="Ghost.TButton",
+                   command=self.edit_notes_selected).pack(side="right", padx=(6, 0))
         ttk.Button(right_actions, text="Rename", style="Ghost.TButton",
-                   command=self.rename_selected).pack(side="right", padx=(8, 0))
-        ttk.Button(right_actions, text="Send to game", style="Gold.TButton",
-                   command=self.send_to_game).pack(side="right", padx=(8, 0))
+                   command=self.rename_selected).pack(side="right", padx=(6, 0))
+        ttk.Button(right_actions, text="Send to game", style="Accent.TButton",
+                   command=self.send_to_game).pack(side="right", padx=(6, 0))
 
-        # status bar
+        footer = tk.Frame(self, bg=COL_PANEL, height=32)
+        footer.pack(fill="x", side="bottom")
+        footer.pack_propagate(False)
         self.status = tk.StringVar(value=f"Library: {self.store.root}")
-        status_bar = ttk.Label(self, textvariable=self.status, style="Sub.TLabel")
-        status_bar.pack(fill="x", padx=20, pady=(0, 14))
-
-    def _draw_dune(self, canvas: tk.Canvas):
-        def redraw(event=None):
-            canvas.delete("all")
-            w = canvas.winfo_width() or 800
-            y = 5
-            points = []
-            step = 14
-            x = 0
-            up = True
-            while x <= w:
-                points.append((x, y - 3 if up else y + 3))
-                x += step
-                up = not up
-            for i in range(len(points) - 1):
-                canvas.create_line(*points[i], *points[i + 1], fill=COL_GOLD_DK, width=2, smooth=True)
-        canvas.bind("<Configure>", redraw)
+        ttk.Label(footer, textvariable=self.status, style="Footer.TLabel").pack(
+            side="left", padx=24, pady=8)
 
     # -- UI helpers -------------------------------------------------------
     def _refresh_folder_label(self):
         exists = self.store.game_folder.exists()
-        marker = "connected" if exists else "not found - click Change game folder"
-        self.folder_label.configure(text=f"Game folder ({marker}): {self.store.game_folder}")
+        self.folder_status.configure(fg=COL_OK if exists else COL_RUST)
+        status = "Connected" if exists else "Not found"
+        self.folder_label.configure(
+            text=f"{status}  ·  {self.store.game_folder}",
+            fg=COL_TEXT if exists else COL_MUTED,
+        )
 
     def _refresh_table(self):
         self.tree.delete(*self.tree.get_children())
@@ -365,7 +373,7 @@ class App(tk.Tk):
         list_frame = ttk.Frame(picker, style="Panel.TFrame")
         list_frame.pack(fill="both", expand=True, padx=14)
         listbox = tk.Listbox(list_frame, selectmode="extended", bg=COL_PANEL, fg=COL_TEXT,
-                              selectbackground=COL_GOLD_DK, selectforeground="#241D0E",
+                              selectbackground=COL_ACCENT_HV, selectforeground=COL_BTN_FG,
                               font=FONT_BODY, borderwidth=0, highlightthickness=0)
         listbox.pack(fill="both", expand=True, padx=2, pady=2)
         for f in wbt_files:
@@ -386,8 +394,8 @@ class App(tk.Tk):
 
         btn_row = ttk.Frame(picker, style="TFrame")
         btn_row.pack(fill="x", padx=14, pady=12)
-        ttk.Button(btn_row, text="Annuler", style="Ghost.TButton", command=picker.destroy).pack(side="right")
-        ttk.Button(btn_row, text="Importer la selection", style="Gold.TButton",
+        ttk.Button(btn_row, text="Cancel", style="Ghost.TButton", command=picker.destroy).pack(side="right")
+        ttk.Button(btn_row, text="Import selection", style="Accent.TButton",
                    command=do_import).pack(side="right", padx=(0, 8))
 
     def rename_selected(self):
